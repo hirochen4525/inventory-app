@@ -6,13 +6,14 @@ import StepMaster from "@/components/StepMaster";
 import StepOcr from "@/components/StepOcr";
 import StepExport from "@/components/StepExport";
 
-const STEPS = ["マスタ登録", "PDF OCR", "集計・出力"] as const;
+const STEPS = ["マスタ登録", "データ取込", "集計・出力"] as const;
 
 export default function Home() {
   const [step, setStep] = useState(0);
   const [shodai, setShodai] = useState<ShodaiItem[]>([]);
   const [zaikoichi, setZaikoichi] = useState<ZaikoichiItem[]>([]);
   const [sheets, setSheets] = useState<OcrSheet[]>([]);
+  const [excelSheets, setExcelSheets] = useState<OcrSheet[]>([]);
 
   const shodaiMap = useMemo(() => {
     const map = new Map<string, ShodaiItem>();
@@ -22,7 +23,7 @@ export default function Home() {
 
   const canGoNext = () => {
     if (step === 0) return shodai.length > 0 && zaikoichi.length > 0;
-    if (step === 1) return sheets.length > 0;
+    if (step === 1) return sheets.length > 0 || excelSheets.length > 0;
     return false;
   };
 
@@ -65,6 +66,13 @@ export default function Home() {
     setSheets((prev) => prev.filter((s) => s.id !== sheetId));
   };
 
+  const handleDeleteExcelSheet = (sheetId: string) => {
+    setExcelSheets((prev) => prev.filter((s) => s.id !== sheetId));
+  };
+
+  // Step3に渡すときはPDF + Excelを合算
+  const allSheets = useMemo(() => [...sheets, ...excelSheets], [sheets, excelSheets]);
+
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-8">棚卸突合アプリ</h1>
@@ -100,18 +108,23 @@ export default function Home() {
       {step === 1 && (
         <StepOcr
           sheets={sheets}
+          excelSheets={excelSheets}
           shodaiMap={shodaiMap}
           onAddSheets={(newSheets) =>
             setSheets((prev) => [...prev, ...newSheets])
           }
+          onAddExcelSheets={(newSheets) =>
+            setExcelSheets((prev) => [...prev, ...newSheets])
+          }
           onUpdateRow={handleUpdateRow}
           onDeleteRow={handleDeleteRow}
           onDeleteSheet={handleDeleteSheet}
+          onDeleteExcelSheet={handleDeleteExcelSheet}
         />
       )}
       {step === 2 && (
         <StepExport
-          sheets={sheets}
+          sheets={allSheets}
           shodai={shodai}
           zaikoichi={zaikoichi}
           shodaiMap={shodaiMap}
