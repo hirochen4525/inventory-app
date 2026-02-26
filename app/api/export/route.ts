@@ -65,7 +65,9 @@ export async function POST(req: NextRequest) {
     const workbook = new ExcelJS.Workbook();
 
     // シート1: 突合結果
-    const ws1 = workbook.addWorksheet("突合結果");
+    const ws1 = workbook.addWorksheet("突合結果", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
     ws1.columns = [
       { header: "品番", key: "品番", width: 18 },
       { header: "商品名", key: "商品名", width: 30 },
@@ -105,12 +107,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // オートフィルター（ヘッダー行に適用）
+    ws1.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 8 },
+    };
+
     // 数値フォーマット
     ws1.getColumn("単価").numFmt = "#,##0";
     ws1.getColumn("差分金額").numFmt = "#,##0";
 
     // シート2: 品番エラー一覧
-    const ws2 = workbook.addWorksheet("品番エラー一覧");
+    const ws2 = workbook.addWorksheet("品番エラー一覧", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
     ws2.columns = [
       { header: "品番", key: "品番", width: 18 },
       { header: "数量", key: "数量", width: 10 },
@@ -137,16 +147,17 @@ export async function POST(req: NextRequest) {
 
     // Bufferに出力
     const buffer = await workbook.xlsx.writeBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-
     const diffCount = matchRows.filter((r) => r.差分 !== 0).length;
 
-    return NextResponse.json({
-      file: base64,
-      summary: {
-        total: matchRows.length,
-        diffCount,
-        errorCount: errors.length,
+    // サマリーをカスタムヘッダーで返す
+    const fileName = `棚卸突合_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${encodeURIComponent(fileName)}"`,
+        "X-Summary-Total": String(matchRows.length),
+        "X-Summary-Diff": String(diffCount),
+        "X-Summary-Errors": String(errors.length),
       },
     });
   } catch (error) {

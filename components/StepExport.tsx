@@ -53,27 +53,20 @@ export default function StepExport({ sheets, shodai, zaikoichi, shodaiMap }: Pro
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        alert(`出力エラー: ${err.error || "不明なエラー"}`);
+        const errText = await res.text();
+        alert(`出力エラー: ${errText}`);
         return;
       }
 
-      const data = await res.json();
+      // サマリーをヘッダーから取得
       setSummary({
-        total: data.summary.total,
-        diffCount: data.summary.diffCount,
-        errorCount: data.summary.errorCount,
+        total: Number(res.headers.get("X-Summary-Total") || 0),
+        diffCount: Number(res.headers.get("X-Summary-Diff") || 0),
+        errorCount: Number(res.headers.get("X-Summary-Errors") || 0),
       });
 
-      // base64 → Blob → ダウンロード
-      const binaryString = atob(data.file);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      // バイナリを直接Blobにしてダウンロード
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
