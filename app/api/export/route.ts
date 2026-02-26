@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     // マスタをMapに
     const shodaiMap = new Map<string, ShodaiItem>();
     for (const item of shodai) {
-      shodaiMap.set(item.品番, item);
+      shodaiMap.set(item.品番.toLowerCase(), item);
     }
 
     const zaikoMap = new Map<string, number>();
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     for (const sheet of ocrSheets) {
       for (const row of sheet.rows) {
         if (!row.品番) continue;
-        if (!shodaiMap.has(row.品番)) {
+        if (!shodaiMap.has(row.品番.toLowerCase())) {
           errors.push({
             品番: row.品番,
             数量: row.数量,
@@ -37,15 +37,16 @@ export async function POST(req: NextRequest) {
           });
           continue;
         }
-        ocrAgg.set(row.品番, (ocrAgg.get(row.品番) || 0) + row.数量);
+        ocrAgg.set(row.品番.toLowerCase(), (ocrAgg.get(row.品番.toLowerCase()) || 0) + row.数量);
       }
     }
 
     // 突合結果を作成（マスタの全品番が対象）
     const matchRows: MatchRow[] = [];
     for (const item of shodai) {
+      const key = item.品番.toLowerCase();
       const やよい在庫 = zaikoMap.get(item.品番) || 0;
-      const 実地棚卸数 = ocrAgg.get(item.品番) || 0;
+      const 実地棚卸数 = ocrAgg.get(key) || 0;
       const 差分 = 実地棚卸数 - やよい在庫;
       const 差分金額 = 差分 * item.単価;
 

@@ -29,7 +29,7 @@ export default function OcrResultTable({ sheet, shodaiMap, onUpdate, onDeleteRow
         </thead>
         <tbody>
           {sheet.rows.map((row) => {
-            const hasError = !shodaiMap.has(row.品番) && row.品番 !== "";
+            const hasError = !shodaiMap.has(row.品番.toLowerCase()) && row.品番 !== "";
             return (
               <tr key={row.id} className={`border-b ${hasError ? "bg-red-50" : ""}`}>
                 <td className="px-3 py-1">

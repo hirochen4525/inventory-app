@@ -17,7 +17,7 @@ export default function Home() {
 
   const shodaiMap = useMemo(() => {
     const map = new Map<string, ShodaiItem>();
-    for (const item of shodai) map.set(item.品番, item);
+    for (const item of shodai) map.set(item.品番.toLowerCase(), item);
     return map;
   }, [shodai]);
 

@@ -31,9 +31,14 @@ export async function POST(req: NextRequest) {
       // ヘッダー行スキップ
       if (rowNumber <= 1) return;
 
-      const values = row.values as (string | number | null)[];
+      const values = row.values as unknown[];
       // col[1]=SKU, col[2]=数量（ExcelJSは1-indexed、values[0]はnull）
-      const sku = String(values[1] ?? "").trim();
+      // ExcelJSはリッチテキストや数値など様々な型で返すので堅牢に変換
+      const rawSku = values[1];
+      const sku = (typeof rawSku === "object" && rawSku !== null && "text" in rawSku
+        ? String((rawSku as { text: string }).text)
+        : String(rawSku ?? "")
+      ).trim();
       const qty = Number(values[2]) || 0;
 
       if (sku && sku !== "SKU") {

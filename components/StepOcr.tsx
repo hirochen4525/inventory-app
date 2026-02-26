@@ -132,7 +132,7 @@ export default function StepOcr({
 
   const totalRows = sheets.reduce((sum, s) => sum + s.rows.length, 0);
   const errorCount = sheets.reduce(
-    (sum, s) => sum + s.rows.filter((r) => r.品番 && !shodaiMap.has(r.品番)).length,
+    (sum, s) => sum + s.rows.filter((r) => r.品番 && !shodaiMap.has(r.品番.toLowerCase())).length,
     0
   );
   const excelTotalRows = excelSheets.reduce((sum, s) => sum + s.rows.length, 0);

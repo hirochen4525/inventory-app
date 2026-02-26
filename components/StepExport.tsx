@@ -25,7 +25,7 @@ export default function StepExport({ sheets, shodai, zaikoichi, shodaiMap }: Pro
   for (const sheet of sheets) {
     for (const row of sheet.rows) {
       if (!row.品番) continue;
-      if (!shodaiMap.has(row.品番)) {
+      if (!shodaiMap.has(row.品番.toLowerCase())) {
         errors.push({
           品番: row.品番,
           数量: row.数量,
