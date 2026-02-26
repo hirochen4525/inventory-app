@@ -1,65 +1,142 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useMemo } from "react";
+import { ShodaiItem, ZaikoichiItem, OcrSheet } from "@/lib/types";
+import StepMaster from "@/components/StepMaster";
+import StepOcr from "@/components/StepOcr";
+import StepExport from "@/components/StepExport";
+
+const STEPS = ["マスタ登録", "PDF OCR", "集計・出力"] as const;
 
 export default function Home() {
+  const [step, setStep] = useState(0);
+  const [shodai, setShodai] = useState<ShodaiItem[]>([]);
+  const [zaikoichi, setZaikoichi] = useState<ZaikoichiItem[]>([]);
+  const [sheets, setSheets] = useState<OcrSheet[]>([]);
+
+  const shodaiMap = useMemo(() => {
+    const map = new Map<string, ShodaiItem>();
+    for (const item of shodai) map.set(item.品番, item);
+    return map;
+  }, [shodai]);
+
+  const canGoNext = () => {
+    if (step === 0) return shodai.length > 0 && zaikoichi.length > 0;
+    if (step === 1) return sheets.length > 0;
+    return false;
+  };
+
+  const handleUpdateRow = (
+    sheetId: string,
+    rowId: string,
+    field: "品番" | "数量" | "備考",
+    value: string
+  ) => {
+    setSheets((prev) =>
+      prev.map((s) =>
+        s.id === sheetId
+          ? {
+              ...s,
+              rows: s.rows.map((r) =>
+                r.id === rowId
+                  ? {
+                      ...r,
+                      [field]: field === "数量" ? (parseFloat(value) || 0) : value,
+                    }
+                  : r
+              ),
+            }
+          : s
+      )
+    );
+  };
+
+  const handleDeleteRow = (sheetId: string, rowId: string) => {
+    setSheets((prev) =>
+      prev.map((s) =>
+        s.id === sheetId
+          ? { ...s, rows: s.rows.filter((r) => r.id !== rowId) }
+          : s
+      )
+    );
+  };
+
+  const handleDeleteSheet = (sheetId: string) => {
+    setSheets((prev) => prev.filter((s) => s.id !== sheetId));
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-8">棚卸突合アプリ</h1>
+
+      {/* ステップナビゲーション */}
+      <div className="flex gap-1 mb-8">
+        {STEPS.map((label, i) => (
+          <button
+            key={label}
+            onClick={() => setStep(i)}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-colors ${
+              i === step
+                ? "bg-blue-600 text-white"
+                : i < step
+                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                : "bg-gray-100 text-gray-400"
+            }`}
+          >
+            {i + 1}. {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ステップ内容 */}
+      {step === 0 && (
+        <StepMaster
+          shodai={shodai}
+          zaikoichi={zaikoichi}
+          onShodai={setShodai}
+          onZaikoichi={setZaikoichi}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+      {step === 1 && (
+        <StepOcr
+          sheets={sheets}
+          shodaiMap={shodaiMap}
+          onAddSheets={(newSheets) =>
+            setSheets((prev) => [...prev, ...newSheets])
+          }
+          onUpdateRow={handleUpdateRow}
+          onDeleteRow={handleDeleteRow}
+          onDeleteSheet={handleDeleteSheet}
+        />
+      )}
+      {step === 2 && (
+        <StepExport
+          sheets={sheets}
+          shodai={shodai}
+          zaikoichi={zaikoichi}
+          shodaiMap={shodaiMap}
+        />
+      )}
+
+      {/* ナビゲーションボタン */}
+      <div className="flex justify-between mt-8">
+        <button
+          onClick={() => setStep((s) => s - 1)}
+          disabled={step === 0}
+          className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          ← 戻る
+        </button>
+        {step < 2 && (
+          <button
+            onClick={() => setStep((s) => s + 1)}
+            disabled={!canGoNext()}
+            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            次へ →
+          </button>
+        )}
+      </div>
+    </main>
   );
 }
