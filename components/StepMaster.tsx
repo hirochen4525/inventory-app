@@ -43,32 +43,58 @@ export default function StepMaster({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h3 className="font-medium mb-2">Shodai.txt（商品マスタ）</h3>
-          <FileDropzone
-            accept=".txt,.csv"
-            label="Shodai.txt をアップロード"
-            onFiles={handleShodai}
-          />
-          {shodai.length > 0 && (
-            <p className="mt-2 text-sm text-green-600">
-              {shodai.length}件 読み込み完了
-            </p>
+          {shodai.length > 0 ? (
+            <div className="border-2 border-green-400 bg-green-50 rounded-lg p-4">
+              <p className="font-bold text-green-700 text-lg">{shodai.length}件 読み込み完了</p>
+              <p className="text-sm text-green-600 mt-1">
+                例: {shodai[0].品番} / {shodai[0].商品名}
+              </p>
+              <button
+                onClick={() => onShodai([])}
+                className="text-xs text-gray-400 mt-2 hover:text-gray-600"
+              >
+                再アップロード
+              </button>
+            </div>
+          ) : (
+            <FileDropzone
+              accept=".txt,.csv"
+              label="Shodai.txt をアップロード"
+              onFiles={handleShodai}
+            />
           )}
         </div>
 
         <div>
           <h3 className="font-medium mb-2">Zaikoichi.txt（やよい在庫）</h3>
-          <FileDropzone
-            accept=".txt,.csv"
-            label="Zaikoichi.txt をアップロード"
-            onFiles={handleZaikoichi}
-          />
-          {zaikoichi.length > 0 && (
-            <p className="mt-2 text-sm text-green-600">
-              {zaikoichi.length}件 読み込み完了
-            </p>
+          {zaikoichi.length > 0 ? (
+            <div className="border-2 border-green-400 bg-green-50 rounded-lg p-4">
+              <p className="font-bold text-green-700 text-lg">{zaikoichi.length}件 読み込み完了</p>
+              <p className="text-sm text-green-600 mt-1">
+                例: {zaikoichi[0].品番} / 在庫 {zaikoichi[0].やよい在庫}
+              </p>
+              <button
+                onClick={() => onZaikoichi([])}
+                className="text-xs text-gray-400 mt-2 hover:text-gray-600"
+              >
+                再アップロード
+              </button>
+            </div>
+          ) : (
+            <FileDropzone
+              accept=".txt,.csv"
+              label="Zaikoichi.txt をアップロード"
+              onFiles={handleZaikoichi}
+            />
           )}
         </div>
       </div>
+
+      {shodai.length > 0 && zaikoichi.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700">
+          両方の読み込みが完了しました。「次へ」でPDFアップロードに進めます。
+        </div>
+      )}
     </div>
   );
 }
