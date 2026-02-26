@@ -47,14 +47,13 @@ export async function POST(req: NextRequest) {
       const やよい在庫 = zaikoMap.get(item.品番) || 0;
       const 実地棚卸数 = ocrAgg.get(item.品番) || 0;
       const 差分 = 実地棚卸数 - やよい在庫;
-      const 単価 = やよい在庫 !== 0 ? item.在庫金額 / やよい在庫 : 0;
-      const 差分金額 = 差分 * 単価;
+      const 差分金額 = 差分 * item.単価;
 
       matchRows.push({
         品番: item.品番,
         商品名: item.商品名,
         倉庫コード: item.倉庫コード,
-        在庫金額: item.在庫金額,
+        単価: item.単価,
         やよい在庫,
         実地棚卸数,
         差分,
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
       { header: "品番", key: "品番", width: 18 },
       { header: "商品名", key: "商品名", width: 30 },
       { header: "倉庫コード", key: "倉庫コード", width: 12 },
-      { header: "在庫金額", key: "在庫金額", width: 14 },
+      { header: "単価", key: "単価", width: 14 },
       { header: "やよい在庫", key: "やよい在庫", width: 12 },
       { header: "実地棚卸数", key: "実地棚卸数", width: 12 },
       { header: "差分", key: "差分", width: 10 },
@@ -107,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 数値フォーマット
-    ws1.getColumn("在庫金額").numFmt = "#,##0";
+    ws1.getColumn("単価").numFmt = "#,##0";
     ws1.getColumn("差分金額").numFmt = "#,##0";
 
     // シート2: 品番エラー一覧

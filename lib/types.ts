@@ -3,7 +3,7 @@ export type ShodaiItem = {
   品番: string;
   商品名: string;
   倉庫コード: string;
-  在庫金額: number;
+  単価: number;
 };
 
 // やよい在庫（Zaikoichi.txt）
@@ -34,7 +34,7 @@ export type MatchRow = {
   品番: string;
   商品名: string;
   倉庫コード: string;
-  在庫金額: number;
+  単価: number;
   やよい在庫: number;
   実地棚卸数: number;
   差分: number;
