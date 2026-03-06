@@ -13,10 +13,11 @@ export function parseShodai(text: string): ShodaiItem[] {
     const cols = line.split("\t");
     const 品番 = (cols[0] || "").trim();
 
-    // 空行やカテゴリ行（品番が短い数字のみ）はスキップ
-    if (!品番 || /^\d{1,4}$/.test(品番)) continue;
-
     const 商品名 = (cols[1] || "").trim();
+
+    // 空行やカテゴリ行（品番のみで商品名が空）はスキップ
+    if (!品番 || !商品名) continue;
+
     const 倉庫コード = (cols[19] || "").trim();
     const 単価 = parseFloat((cols[34] || "0").replace(/,/g, "")) || 0;
 
